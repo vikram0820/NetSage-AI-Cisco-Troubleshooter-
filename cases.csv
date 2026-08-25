@@ -1,0 +1,116 @@
+case_id,symptom,topology_note,show_outputs,expected_fault,osi_layer,concept_tag,severity,suggested_commands
+NET-001,PC1 cannot reach Server1 in VLAN 30,Router-on-a-stick; VLAN 30 sub-interface is present but down,"GigabitEthernet0/0.10 is up, line protocol is up
+GigabitEthernet0/0.30 is administratively down, line protocol is down",Sub-interface GigabitEthernet0/0.30 is administratively down,Layer 3,Inter-VLAN Routing,High,"show ip interface brief
+configure terminal
+interface GigabitEthernet0/0.30
+no shutdown"
+NET-002,PC in VLAN 20 cannot reach its gateway,Access switch port assigned to wrong VLAN,"show vlan brief
+FastEthernet0/5 is in VLAN 10
+PC address: 192.168.20.10/24
+Gateway: 192.168.20.1",Access port Fa0/5 should be in VLAN 20,Layer 2,VLAN,High,"show vlan brief
+interface fa0/5
+switchport access vlan 20"
+NET-003,PC receives no DHCP address,DHCP pool has an incorrect network statement,"ipconfig: 169.254.20.15
+show running-config | section dhcp
+network 192.168.30.0 255.255.255.0",DHCP pool network does not match client VLAN subnet,Layer 3,DHCP,High,show running-config | section dhcp
+NET-004,PC can ping gateway but not remote network,Static route to remote LAN is missing,"show ip route
+C 192.168.10.0/24 is directly connected
+No route for 192.168.40.0/24",Missing route for 192.168.40.0/24,Layer 3,Routing,High,"show ip route
+ip route 192.168.40.0 255.255.255.0 <next-hop>"
+NET-005,Users cannot resolve www.example.local,DNS server address on DHCP pool is incorrect,"ipconfig /all
+DNS Servers: 192.168.50.99
+Correct DNS server: 192.168.50.10",Incorrect DNS server supplied to clients,Layer 7,DNS,Medium,show running-config | section dhcp
+NET-006,Guest VLAN can access internal server,Guest ACL does not deny internal subnet,"show access-lists GUEST-IN
+permit ip any any
+Guest subnet: 192.168.60.0/24
+Internal: 192.168.10.0/24",Guest isolation ACL is too permissive,Layer 3/4,ACL,Critical,"show access-lists
+ip access-list extended GUEST-IN"
+NET-007,NAT inside users cannot access internet,NAT overload rule is missing,"show ip nat translations
+<empty>
+show running-config | include ip nat",Missing PAT/NAT overload configuration,Layer 3,NAT,High,"show ip nat translations
+show running-config | include ip nat"
+NET-008,Only one switch VLAN works across trunk,VLAN 30 is missing from allowed VLAN list,"show interfaces trunk
+Vlans allowed on trunk: 10,20
+Required VLANs: 10,20,30",VLAN 30 is not allowed on trunk,Layer 2,Trunking,High,"show interfaces trunk
+interface g0/1
+switchport trunk allowed vlan add 30"
+NET-009,PC gets wrong gateway,DHCP default-router points to wrong address,"show running-config | section dhcp
+default-router 192.168.10.254
+SVI gateway: 192.168.10.1",DHCP default gateway is incorrect,Layer 3,DHCP,High,show running-config | section dhcp
+NET-010,Router interface has no connectivity,Interface is administratively down,"show ip interface brief
+GigabitEthernet0/1 192.168.2.1 administratively down down",GigabitEthernet0/1 is shutdown,Layer 1/3,Interface Status,High,"interface g0/1
+no shutdown"
+NET-011,Two PCs intermittently lose connectivity,Duplicate IP address configured,"PC1: 192.168.10.20/24
+PC2: 192.168.10.20/24
+ARP table shows same address changing MAC",Duplicate IP address exists,Layer 3,IP Addressing,High,"show ip arp
+ipconfig /all"
+NET-012,Hosts cannot communicate between VLAN 10 and 20,SVI for VLAN 20 is missing,"show ip interface brief
+Vlan10 192.168.10.1 up up
+No Vlan20 interface",VLAN 20 SVI is missing,Layer 3,Inter-VLAN Routing,High,"show ip interface brief
+interface vlan 20
+ip address 192.168.20.1 255.255.255.0
+no shutdown"
+NET-013,Switch reports VLAN 40 does not exist,VLAN was never created,"show vlan brief
+10 Users
+20 Staff
+30 Servers
+No VLAN 40",VLAN 40 is missing,Layer 2,VLAN,Medium,"vlan 40
+name VLAN40"
+NET-014,OSPF neighbor is not forming,Interfaces are in different OSPF areas,"show ip ospf neighbor
+R1 G0/0 area 0
+R2 G0/0 area 1",OSPF area mismatch,Layer 3,OSPF,High,show ip ospf interface
+NET-015,OSPF neighbor is down after address change,OSPF network statement does not include interface,"show ip ospf interface brief
+G0/1 not listed
+show running-config | section router ospf",OSPF is not enabled for G0/1,Layer 3,OSPF,High,"show ip protocols
+router ospf 1"
+NET-016,Ping to remote server fails but route exists,ACL denies ICMP,"show access-lists
+deny icmp 192.168.10.0 0.0.0.255 host 192.168.40.10
+permit ip any any",ACL explicitly denies ICMP,Layer 3/4,ACL,High,"show access-lists
+show ip interface"
+NET-017,Web server reachable by IP but not name,DNS record is missing,"nslookup web.local
+*** server can't find web.local: NXDOMAIN
+ping 192.168.40.10 succeeds",DNS record for web.local is missing,Layer 7,DNS,Medium,nslookup web.local
+NET-018,DHCP clients in VLAN 30 get no address,DHCP relay helper-address is missing,"show running-config interface vlan 30
+No ip helper-address
+DHCP server: 192.168.100.10",Missing DHCP relay helper-address,Layer 3,DHCP Relay,High,"show running-config interface vlan 30
+ip helper-address 192.168.100.10"
+NET-019,Trunk link is not negotiating,Port is configured as access mode,"show interfaces switchport
+Administrative Mode: static access
+Operational Mode: static access",Trunk port is configured as access,Layer 2,Trunking,High,"interface g0/1
+switchport mode trunk"
+NET-020,PC cannot reach another subnet,PC has wrong subnet mask,"PC IP: 192.168.10.20
+Mask: 255.255.0.0
+Expected mask: 255.255.255.0",Incorrect subnet mask,Layer 3,IP Addressing,Medium,ipconfig /all
+NET-021,Internet access fails after NAT configuration,Inside/outside interface roles are reversed,"show ip nat statistics
+Inside interfaces: G0/1
+Outside interfaces: G0/0
+Topology shows LAN on G0/0, ISP on G0/1",NAT inside/outside roles are reversed,Layer 3,NAT,High,"show ip nat statistics
+show running-config interface g0/0"
+NET-022,Only DHCP clients fail while static hosts work,DHCP pool is exhausted,"show ip dhcp pool
+Leased addresses: 254
+Maximum addresses: 254",DHCP address pool has no free leases,Layer 3,DHCP,Medium,show ip dhcp pool
+NET-023,Server cannot be reached from one subnet,Return route to client subnet is missing,"show ip route
+Server router has 192.168.40.0/24
+No route to 192.168.20.0/24",Missing return route to client subnet,Layer 3,Routing,High,show ip route
+NET-024,Switch management IP cannot be reached,Management SVI is shutdown,"show ip interface brief
+Vlan99 192.168.99.2 administratively down down",Management SVI is shutdown,Layer 3,Switch Management,Medium,"interface vlan 99
+no shutdown"
+NET-025,Wireless clients connect but cannot access LAN,Wireless SSID is mapped to guest VLAN,"show vlan brief
+SSID CORP -> VLAN 60
+VLAN 60 policy is guest-only",Corporate SSID is mapped to guest VLAN,Layer 2/3,Wireless VLAN,High,show vlan brief
+NET-026,ACL works for some hosts but not others,ACL wildcard mask is incorrect,"access-list 110 permit ip 192.168.10.0 0.0.255.255 any
+Expected wildcard: 0.0.0.255",ACL wildcard mask is too broad,Layer 3/4,ACL,High,show access-lists 110
+NET-027,Router cannot ping directly connected peer,IP addresses are in different subnets,"R1 G0/0: 10.0.0.1/30
+R2 G0/0: 10.0.0.6/30",Connected interfaces are not in the same subnet,Layer 3,IP Addressing,High,show ip interface brief
+NET-028,Port security blocks a legitimate PC,Sticky MAC table has a different learned MAC,"show port-security interface fa0/8
+Secure MAC: 00AA.BBCC.DDEE
+Current PC MAC: 00AA.BBCC.1122
+Violation: shutdown",Port-security violation caused by MAC mismatch,Layer 2,Port Security,High,show port-security interface fa0/8
+NET-029,VLAN traffic stops after switch replacement,Native VLAN mismatch on trunk,"show interfaces trunk
+SW1 native VLAN: 99
+SW2 native VLAN: 1",Native VLAN mismatch,Layer 2,Trunking,Medium,show interfaces trunk
+NET-030,Static route configured but not installed,Next-hop is unreachable,"show ip route static
+% Route not installed
+show ip route 10.10.20.0
+No route to next-hop 10.0.0.2",Static route next-hop is unreachable,Layer 3,Routing,High,"show ip route
+show ip route <next-hop>"
