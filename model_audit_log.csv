@@ -1,0 +1,6 @@
+case_id,ai_status,human_decision,reason
+NET-001,Correct,Accepted,Evidence directly shows sub-interface administratively down.
+NET-006,Needs correction,Edited,AI initially suggested general routing; reviewer identified guest ACL isolation.
+NET-014,Correct,Accepted,OSPF area mismatch supported by show output.
+NET-017,Needs correction,Edited,Reviewer requested DNS record verification before any change.
+NET-028,Needs correction,Rejected,Port-security violation must be physically verified before clearing security state.

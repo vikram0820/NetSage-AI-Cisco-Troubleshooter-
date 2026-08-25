@@ -1,0 +1,14 @@
+NetSage_AI_Project/
+├── app.py
+├── requirements.txt
+├── README.md
+├── data/
+│   └── cases.csv
+├── src/
+│   ├── __init__.py
+│   ├── checker.py
+│   └── engine.py
+├── prompts/
+│   └── diagnose_prompt.md
+└── docs/
+    └── model_audit_log.csv
